@@ -5,14 +5,14 @@ Based on reflection and Proxy
 
 Rules:
 * For use must use default value _engine = Engine_
-* For correct work use inject class last params
+* For correct work use inject class first argument
 
 Example
 ```js
 
 class Wheel {
-    constructor() {
-        this.radix = 15
+    constructor(value) {
+        this.radix = value
     }
 }
 
@@ -23,7 +23,7 @@ class Engine {
 }
 
 class Car {
-    constructor(number = 4, engine = Engine) {
+    constructor(engine = Engine, number = 4) {
         this.engine = engine
         this.number = number
     }
@@ -36,12 +36,12 @@ class Car {
      * @param {number} power
      * @param {Wheel} wheel
      */
-    calculateSpeed(power, wheel = Wheel) {
+    calculateSpeed(wheel = Wheel, power) {
         return power * wheel.radix
     }
 }
-di.registration(Wheel)
-di.registrate(Car)
+di.registration(Wheel, 15)
+di.registrate(Car, 1) // or use more params di.registration({name: 'Car', class: Car}, 1)
 
 const car = di.getDeps(Car) // Car { engine: Engine, number: 4 }
 car.calculateSpeed(15) // wheel inject from DI, result = 225

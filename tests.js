@@ -4,13 +4,13 @@ const di = DIContainer.getInstance()
 
 
 class Wheel {
-    constructor() {
-        this.radix = 15
+    constructor(value =  10) {
+        this.radix = value
     }
 }
 
 class Car {
-    constructor(number = 4, engine = Engine) {
+    constructor(engine = Engine, number = 4) {
         this.engine = engine
         this.number = number
     }
@@ -19,7 +19,7 @@ class Car {
      * @param {number} power
      * @param {Wheel} wheel
      */
-    async asyncCalculatePower(power, wheel = Wheel) {
+    async asyncCalculatePower(wheel = Wheel, power) {
         return power * wheel.radix
     }
 
@@ -27,7 +27,7 @@ class Car {
      * @param {number} power
      * @param {Wheel} wheel
      */
-    calculatePower(power, wheel = Wheel) {
+    calculatePower(wheel = Wheel, power= 15) {
         return power * wheel.radix
     }
 }
@@ -35,13 +35,16 @@ class Car {
 class Engine {}
 
 di.registrationSingleTon(Engine)
-di.registration(Wheel)
+di.registration(Wheel, 15)
 di.registration(Car, 1)
+di.registration({name: 'Car', class: Car}, 1)
 
 const car = di.getDeps(Car)
 
-car.asyncCalculatePower(15).then(item => console.assert(item === 225));
-console.assert(car.calculatePower(15) ===  225);
+const CALCULATE_POWER = 225
+
+car.asyncCalculatePower(15).then(item => console.assert(item === CALCULATE_POWER));
+console.assert(car.calculatePower() ===  CALCULATE_POWER);
 
 console.assert(typeof di.getDeps(Car).engine === 'object')
 console.assert(typeof car.asyncCalculatePower(15) === 'object')

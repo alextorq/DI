@@ -52,27 +52,18 @@ export class DIContainer {
 
     /**
      * @param {Array<Array<string, string>>} debs
-     * @return {*}
+     * @return {Array<Class>}
      */
     getFrom(debs) {
         return debs.map(deb => {
-            const debName = deb[0]
             const debItem = deb[1]
             if (this.container[debItem]) {
                 if (typeof this.container[debItem] === 'function') {
                     return this.container[debItem]()
                 }
                 return this.container[debItem]
-            } else {
-                if (debName && !debItem) {
-                    return nullItem
-                }
-                try {
-                    return JSON.parse(debItem)
-                } catch (e) {
-                    return debItem
-                }
             }
+            return nullItem
         }).filter(item => item !== nullItem)
     }
 
@@ -80,6 +71,9 @@ export class DIContainer {
      * @param {Class|object} item
      */
     registration(item, ...params) {
+        if (typeof item !== 'function' && typeof item !== 'object') {
+            throw new Error('argument must be class or object')
+        }
         const classInstance = typeof item === 'function' ? item : item.class
         const name = item.name
         if (this.container[name]) return
@@ -90,10 +84,7 @@ export class DIContainer {
                 construct(target, params) {
                     const debs = getConstructorSignature(classInstance)
                     let args = self.getFrom(debs)
-                    if (params.length && Array.isArray(args)) {
-                        args = args.slice(params.length)
-                    }
-                    const result = [...params, ...args]
+                    const result = [...args, ...params]
                     return new target(...result);
                 }
             });
@@ -104,9 +95,11 @@ export class DIContainer {
                 get(target, propKey, receiver) {
                     const origMethod = target[propKey];
                     if (typeof origMethod === 'function') {
-                        return function (...args) {
+                        return function (...params) {
                             const deb = getMethodsSignature(origMethod, propKey)
-                            return origMethod.apply(this, [...args, ...self.getFrom(deb)]);
+                            let args = self.getFrom(deb)
+                            const result = [...args, ...params]
+                            return origMethod.apply(this, result);
                         };
                     }
                     return origMethod
@@ -115,8 +108,12 @@ export class DIContainer {
         }
     }
 
-    getDeps(classInstance) {
-        const name = classInstance.name
+    /**
+     * @param {Class|object} item
+     * @return {object}
+     */
+    getDeps(item) {
+        const name = typeof item === 'string' ? item : item.name
         const exemplar = this.container[name]
         if (typeof exemplar === 'function') {
             return exemplar()
