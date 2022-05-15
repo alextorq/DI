@@ -27,7 +27,7 @@ class Car {
      * @param {number} power
      * @param {Wheel} wheel
      */
-    calculatePower(wheel = Wheel, power= 15) {
+    calculatePower(wheel = Wheel, power = 15) {
         return power * wheel.radix
     }
 }

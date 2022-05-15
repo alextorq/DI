@@ -28,6 +28,19 @@ const getMethodsSignature = (classFunc, propKey) => {
 
 export const nullItem = Symbol('null')
 
+
+function isFunction(obj) {
+    return typeof obj === 'function';
+}
+
+function isClass(obj) {
+    return isFunction(obj) && /^class\s/.test(obj.toString());
+}
+
+function isObject(obj) {
+    return obj !== null && typeof obj === 'object';
+}
+
 export class DIContainer {
     /**
      * @private
@@ -71,10 +84,10 @@ export class DIContainer {
      * @param {Class|object} item
      */
     registration(item, ...params) {
-        if (typeof item !== 'function' && typeof item !== 'object') {
+        if (!isClass(item) && !isObject(item)) {
             throw new Error('argument must be class or object')
         }
-        const classInstance = typeof item === 'function' ? item : item.class
+        const classInstance = isClass(item) ? item : item.class
         const name = item.name
         if (this.container[name]) return
         const self = this
@@ -94,7 +107,7 @@ export class DIContainer {
             return new Proxy(instance, {
                 get(target, propKey, receiver) {
                     const origMethod = target[propKey];
-                    if (typeof origMethod === 'function') {
+                    if (isFunction(origMethod)) {
                         return function (...params) {
                             const deb = getMethodsSignature(origMethod, propKey)
                             let args = self.getFrom(deb)
@@ -109,13 +122,13 @@ export class DIContainer {
     }
 
     /**
-     * @param {Class|object} item
+     * @param {Class|string} item
      * @return {object}
      */
     getDeps(item) {
-        const name = typeof item === 'string' ? item : item.name
+        const name = isClass(item) ? item.name : item
         const exemplar = this.container[name]
-        if (typeof exemplar === 'function') {
+        if (isFunction(exemplar)) {
             return exemplar()
         }
         return exemplar
